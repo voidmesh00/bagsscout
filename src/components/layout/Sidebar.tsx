@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Search, Zap, TrendingUp, BookOpen, Settings } from 'lucide-react'
+import { Search, Zap, TrendingUp, Bell, BookOpen, Settings } from 'lucide-react'
 
 const navItems = [
   { href: '/analyzer', icon: Search, label: 'Token Analyzer', badge: null },
