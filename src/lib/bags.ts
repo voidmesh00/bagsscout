@@ -66,12 +66,45 @@ export async function fetchTokenMetadataFromTopTokens(mintAddress: string): Prom
 }
 
 export async function fetchTokenHolders(mintAddress: string): Promise<TokenHolder[]> {
-  const query = `query GetHolders($mint: String!) { Solana { BalanceUpdates(where: { BalanceUpdate: { Currency: { MintAddress: { is: $mint } } PostBalance: { gt: "0" } } } orderBy: { descending: BalanceUpdate_PostBalance } limit: { count: 20 }) { BalanceUpdate { Account { Address } PostBalance } } } }`
+  const query = `query GetHolders($mint: String!) {
+    Solana {
+      BalanceUpdates(
+        where: { BalanceUpdate: { Currency: { MintAddress: { is: $mint } } PostBalance: { gt: "0" } } }
+        orderBy: { descending: BalanceUpdate_PostBalance }
+        limit: { count: 50 }
+      ) {
+        BalanceUpdate {
+          Account { Address }
+          PostBalance
+        }
+      }
+    }
+  }`
   try {
     const res = await fetch('https://streaming.bitquery.io/graphql', { method: 'POST', headers: bitqueryHeaders(), body: JSON.stringify({ query, variables: { mint: mintAddress } }) })
     const updates = (await res.json())?.data?.Solana?.BalanceUpdates || []
-    const total = updates.reduce((s: number, u: any) => s + parseFloat(u.BalanceUpdate.PostBalance), 0)
-    return updates.map((u: any) => ({ address: u.BalanceUpdate.Account.Address, amount: parseFloat(u.BalanceUpdate.PostBalance), percentage: total > 0 ? (parseFloat(u.BalanceUpdate.PostBalance) / total) * 100 : 0 }))
+    
+    // Deduplicate: keep highest balance per wallet
+    const walletMap = new Map<string, number>()
+    for (const u of updates) {
+      const addr = u.BalanceUpdate.Account.Address
+      const bal = parseFloat(u.BalanceUpdate.PostBalance)
+      if (!walletMap.has(addr) || walletMap.get(addr)! < bal) {
+        walletMap.set(addr, bal)
+      }
+    }
+    
+    // Sort by balance descending, take top 20
+    const sorted = Array.from(walletMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 20)
+    
+    const total = sorted.reduce((s, [, bal]) => s + bal, 0)
+    return sorted.map(([addr, bal]) => ({
+      address: addr,
+      amount: bal,
+      percentage: total > 0 ? (bal / total) * 100 : 0
+    }))
   } catch { return [] }
 }
 
