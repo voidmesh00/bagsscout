@@ -8,6 +8,7 @@ const navItems = [
   { href: '/analyzer', icon: Search, label: 'Token Analyzer', badge: null },
   { href: '/feed', icon: Zap, label: 'Live Feed', badge: 'NEW' },
   { href: '/tokens', icon: TrendingUp, label: 'Top Tokens', badge: null },
+  { href: '/alerts', icon: Bell, label: 'Alerts', badge: 'AI' },
 ]
 
 export default function Sidebar() {
