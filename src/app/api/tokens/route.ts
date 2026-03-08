@@ -5,6 +5,10 @@ export async function GET() {
   try {
     const recentTokens = await fetchRecentBagsTokens()
 
+    if (recentTokens.length === 0) {
+      return NextResponse.json({ tokens: [], error: 'rate_limit' })
+    }
+
     const tokensWithFees = await Promise.all(
       recentTokens.slice(0, 20).map(async (token) => {
         const meta = await fetchTokenMetadata(token.mintAddress!)

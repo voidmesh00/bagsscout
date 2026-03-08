@@ -7,11 +7,12 @@ export default function TokensPage() {
   const [tokens, setTokens] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [rateLimit, setRateLimit] = useState(false)
 
   useEffect(() => {
     fetch('/api/tokens')
       .then(r => r.json())
-      .then(data => { setTokens(data.tokens || []); setLoading(false) })
+      .then(data => { setTokens(data.tokens || []); setRateLimit(data.error === 'rate_limit'); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
@@ -70,7 +71,14 @@ export default function TokensPage() {
 
           {!loading && filtered.length === 0 && (
             <div className="px-5 py-12 text-center">
-              <p className="text-sm" style={{ color: 'var(--muted)' }}>No tokens found.</p>
+              {rateLimit ? (
+                <div>
+                  <p className="text-sm font-mono mb-1" style={{ color: 'var(--accent)' }}>⚠ Rate limit reached</p>
+                  <p className="text-xs" style={{ color: 'var(--muted)' }}>Bags API resets hourly. Please check back in a few minutes.</p>
+                </div>
+              ) : (
+                <p className="text-sm" style={{ color: 'var(--muted)' }}>No tokens found.</p>
+              )}
             </div>
           )}
 
