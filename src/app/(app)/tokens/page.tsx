@@ -8,6 +8,7 @@ export default function TokensPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [rateLimit, setRateLimit] = useState(false)
+  const [sortBy, setSortBy] = useState<'totalFees'|'unclaimedFees'|'volume24h'|'holders'>('totalFees')
 
   useEffect(() => {
     fetch('/api/tokens')
@@ -16,10 +17,12 @@ export default function TokensPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const filtered = tokens.filter(t =>
+  const filtered = tokens
+    .filter(t =>
     t.name?.toLowerCase().includes(search.toLowerCase()) ||
     t.symbol?.toLowerCase().includes(search.toLowerCase())
   )
+  .sort((a, b) => (b[sortBy] || 0) - (a[sortBy] || 0))
 
   return (
     <div className="min-h-full">
@@ -42,6 +45,25 @@ export default function TokensPage() {
             className="w-full rounded-lg py-2.5 pl-9 pr-4 font-mono text-sm outline-none"
             style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--text)' }}
           />
+        </div>
+
+        {/* Sort selector */}
+        <div className="flex items-center gap-2 mt-4">
+          <span className="font-mono text-xs" style={{ color: 'var(--muted)' }}>SORT BY</span>
+          {(['totalFees', 'unclaimedFees', 'volume24h', 'holders'] as const).map(key => (
+            <button
+              key={key}
+              onClick={() => setSortBy(key)}
+              className="font-mono text-xs px-3 py-1.5 rounded-lg transition-all"
+              style={{
+                background: sortBy === key ? 'rgba(200,240,74,0.15)' : 'var(--surface2)',
+                color: sortBy === key ? 'var(--accent)' : 'var(--muted)',
+                border: sortBy === key ? '1px solid rgba(200,240,74,0.3)' : '1px solid var(--border)',
+              }}
+            >
+              {key === 'totalFees' ? 'Lifetime Fees' : key === 'unclaimedFees' ? 'Unclaimed Fees' : key === 'volume24h' ? 'Volume 24h' : 'Holders'}
+            </button>
+          ))}
         </div>
       </div>
 
